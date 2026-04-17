@@ -3,6 +3,10 @@ This JS app teaches the pattern that AAA Game Studios use to program things such
 
 ---
 
+Use App: https://christopherandrewtopalian.github.io/CATopalian_JavaScript_Component_Based_Architecture/CATopalian_JavaScript_Component_Based_Architecture.html
+
+---
+
 ### How to Download this App
 1. **Click** the green **Code Button** on this github page
 2. Choose **Download ZIP**
