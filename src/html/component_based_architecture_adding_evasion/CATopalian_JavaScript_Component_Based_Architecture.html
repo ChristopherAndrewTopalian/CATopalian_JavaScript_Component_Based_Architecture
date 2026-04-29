@@ -1,0 +1,479 @@
+<!-- Dedicated to God the Father -->
+<!-- All Rights Reserved Christopher Andrew Topalian Copyright 2000-2026 -->
+<!-- https://github.com/ChristopherTopalian -->
+<!-- https://github.com/ChristopherAndrewTopalian -->
+<!-- CATopalian_JavaScript_Component_Based_Architecture.html -->
+
+<!DOCTYPE html>
+<html lang = 'en'>
+<head>
+<title> CATopalian JavaScript Component Based Architecture </title>
+
+<style>
+
+body
+{
+    background-color: rgb(30, 30, 30);
+    font-family: Arial;
+    color: rgb(255, 255, 255);
+}
+
+.drone-style
+{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background-color: rgb(100, 100, 100);
+    border: 2px solid white;
+    text-align: center;
+    line-height: 100px;
+    font-weight: bold;
+}
+
+.btn-style
+{
+    padding: 2px 5px;
+    margin-right: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: rgb(40, 67, 117);
+    color: rgb(255, 255, 255);
+    border: 1px solid cyan;
+    border-radius: 8px;
+}
+
+.btn-style:hover
+{
+    color: aqua;
+}
+
+</style>
+
+<script>
+
+// shortcuts
+
+function ge(whichId)
+{
+    let result = document.getElementById(whichId);
+    return result;
+}
+
+function ce(whichType)
+{
+    let result = document.createElement(whichType);
+    return result;
+}
+
+function ba(whichElement)
+{
+    let result = document.body.append(whichElement);
+    return result;
+}
+
+function cl(whichMessage)
+{
+    let result = console.log(whichMessage);
+    return result;
+}
+
+function gr(whichId)
+{
+    let result =  ge(whichId).getBoundingClientRect();
+    return result;
+}
+
+//----//
+
+// THE COMPONENTS (The Chips)
+
+class LocationComponent
+{
+    constructor(elementId, startX, startY)
+    {
+        this.element = ge(elementId);
+        this.x = startX;
+        this.y = startY;
+
+        // set the physical starting position in the DOM
+        this.element.style.left = this.x + "px";
+        this.element.style.top = this.y + "px";
+    }
+
+    moveLeft()
+    {
+        this.x -= 50;
+        this.element.style.left = this.x + "px";
+    }
+
+    moveRight()
+    {
+        this.x += 50;
+        this.element.style.left = this.x + "px";
+    }
+}
+
+class LEDComponent
+{
+    constructor(elementId)
+    {
+        this.element = ge(elementId);
+    }
+
+    setColor(newColor)
+    {
+        this.element.style.backgroundColor = newColor;
+    }
+
+    randomColor()
+    {
+        let r = Math.floor(Math.random() * 255);
+        let g = Math.floor(Math.random() * 255);
+        let b = Math.floor(Math.random() * 255);
+        this.setColor(`rgb(${r}, ${g}, ${b})`);
+    }
+}
+
+//----//
+
+class DistanceComponent
+{
+    constructor(elementId, originX = 0, originY = 0)
+    {
+        this.elementId = elementId;
+
+        // The anchor point we are measuring from
+        this.originX = originX;
+        this.originY = originY;
+    }
+
+    // asks the DOM for position, returns the math
+    getDistanceFromOrigin()
+    {
+        // Uses our shortcut to get the physical DOM rect
+        let rect = gr(this.elementId); 
+        
+        // Calculate the difference between current position and origin
+        let diffX = Math.abs(rect.x - this.originX);
+        let diffY = Math.abs(rect.y - this.originY);
+
+        // Calculate the true straight-line distance (Radial)
+        let radialDistance = Math.floor(Math.sqrt((diffX * diffX) + (diffY * diffY)));
+
+        return { 
+            x: diffX, 
+            y: diffY, 
+            total: radialDistance 
+        };
+    }
+}
+
+class EvasionComponent 
+{
+    constructor(targetId, speed, maxDistance) 
+    {
+        // Data injected from the Container (The Drone)
+        this.targetId = targetId;
+        this.speed = speed;
+        this.maxDistance = maxDistance;
+
+        // Internal state data
+        this.direction = 1;  // 1 moves right, -1 moves left
+        this.startX = null;  // Will record the starting position
+        this.isInitialized = false; 
+    }
+
+    update() 
+    {
+        let el = ge(this.targetId);
+        if (!el) return;
+
+        let rect = el.getBoundingClientRect(); 
+
+        // Lock in the starting position on the very first frame
+        if (!this.isInitialized) 
+        {
+            this.startX = rect.left;
+            this.isInitialized = true;
+        }
+
+        // Calculate how far the drone has traveled from its origin
+        let distanceTraveled = rect.left - this.startX;
+
+        // If it moved too far right, flip direction to negative (left)
+        if (distanceTraveled >= this.maxDistance) 
+        {
+            this.direction = -1;
+        }
+        // If it made it back to the start, flip direction to positive (right)
+        else if (distanceTraveled <= 0) 
+        {
+            this.direction = 1;
+        }
+
+        // Apply the speed and direction to the exact current position
+        let newX = rect.left + (this.speed * this.direction);
+        el.style.left = newX + "px";
+    }
+}
+
+//----//
+
+// THE SHELL (The Entity Container)
+class Drone
+{
+    constructor(id, startX, startY, speed = 2, maxDistance = 200)
+    {
+        this.id = id;
+
+        this.location = new LocationComponent(id, startX, startY);
+        
+        this.led = new LEDComponent(id);
+
+        // Initialize the distance chip, setting startX and startY as the origin
+        this.distanceTracker = new DistanceComponent(id, startX, startY);
+
+        // Initialize the Evasion Chip
+        this.evasion = new EvasionComponent(id, speed, maxDistance);
+
+        // A variable to store the engine loop so we can turn it off later
+        this.patrolTimer = null; 
+    }
+
+    flyLeft()
+    {
+        this.location.moveLeft();
+
+        let distanceData = this.distanceTracker.getDistanceFromOrigin();
+        ge('distanceBox').textContent = `Distance from origin: ${distanceData.total}px`;
+        ge('infoBox').textContent = "Status: Drone flying left.";
+    }
+
+    flyRight()
+    {
+        this.location.moveRight();
+
+        let distanceData = this.distanceTracker.getDistanceFromOrigin();
+        ge('distanceBox').textContent = `Distance from origin: ${distanceData.total}px`;
+        ge('infoBox').textContent = "Status: Drone flying right.";
+    }
+
+    startEvasion()
+    {
+        if (this.patrolTimer !== null) return; 
+
+        ge('infoBox').textContent = "Status: Drone executing evasive maneuvers.";
+
+        this.patrolTimer = setInterval(() => 
+        {
+            // The Evasion chip physically moves the element
+            this.evasion.update();
+
+            // We read the raw DOM location
+            let rect = ge(this.id).getBoundingClientRect();
+
+            // We update the UI directly from the raw data
+            ge('distanceBox').textContent = `Current Screen Position X: ${Math.round(rect.left)}px`;
+
+        }, 1000 / 60); 
+    }
+
+    haltEvasion()
+    {
+        // cut the power to the loop
+        clearInterval(this.patrolTimer);
+        this.patrolTimer = null;
+
+        ge('infoBox').textContent = "Status: Evasive maneuvers halted. Holding position.";
+    }
+}
+
+//----//
+
+// worlwide VARIABLES
+let drone001;
+
+let drone002;
+
+//----//
+
+// THE INTERFACE BUILDER
+function makeInterface()
+{
+    // Title
+    let title = ce('h3');
+    title.textContent = "CATopalian JavaScript Component Based Architecture Flow";
+    ba(title);
+
+    //-//
+
+    // btnFlyLeft
+    let btnFlyLeft = ce('button');
+    btnFlyLeft.className = "btn-style";
+    btnFlyLeft.textContent = "Fly Left";
+    btnFlyLeft.onclick = function()
+    { 
+        drone001.flyLeft(); 
+        drone002.flyLeft();
+    };
+    ba(btnFlyLeft);
+
+    //-//
+
+    // btnFlyRight
+    let btnFlyRight = ce('button');
+    btnFlyRight.className = "btn-style";
+    btnFlyRight.textContent = "Fly Right";
+    btnFlyRight.onclick = function()
+    { 
+        drone001.flyRight(); 
+        drone002.flyRight();
+    };
+    ba(btnFlyRight);
+
+    //-//
+
+    // btnParty
+    let btnParty = ce('button');
+    btnParty.className = "btn-style";
+    btnParty.textContent = "Party Mode";
+    btnParty.onclick = function()
+    {
+        if (drone001.led)
+        {
+            drone001.led.randomColor();
+
+            ge('infoBox').textContent = "Status: Party Mode Engaged!";
+        }
+        else
+        {
+            ge('infoBox').textContent = "Error: Cannot activate. No LED Component installed!";
+        }
+
+        //-//
+
+        if (drone002.led)
+        {
+            drone002.led.randomColor();
+    
+            ge('infoBox').textContent = "Status: Party Mode Engaged!";
+        }
+        else
+        {
+            ge('infoBox').textContent = "Error: Cannot activate. No LED Component installed!";
+        }
+    };
+    ba(btnParty);
+
+    //-//
+
+    let btnEvade = ce('button');
+    btnEvade.className = "btn-style";
+    btnEvade.textContent = "Evade!";
+    btnEvade.onclick = function()
+    { 
+        drone001.startEvasion(); 
+        drone002.startEvasion();
+    };
+    ba(btnEvade);
+
+    //-//
+
+    let stopEvasionBtn = ce('button');
+    stopEvasionBtn.className = "btn-style";
+    stopEvasionBtn.textContent = 'Halt Evasive Maneuvers';
+    stopEvasionBtn.style.backgroundColor = 'rgb(0, 0, 0)';
+    stopEvasionBtn.style.cursor = 'pointer';
+    stopEvasionBtn.onclick = function()
+    {
+        drone001.haltEvasion(); 
+        drone002.haltEvasion(); 
+    };
+    ba(stopEvasionBtn);
+
+    //-//
+
+    let infoBox = ce('div');
+    infoBox.id = "infoBox";
+    infoBox.style.margin = "15px";
+    infoBox.style.color = "cyan";
+    infoBox.textContent = "Status: Drone is offline.";
+    ba(infoBox);
+
+    //-//
+
+    let distanceBox = ce('div');
+    distanceBox.id = "distanceBox";
+    distanceBox.style.margin = "15px";
+    distanceBox.style.color = "cyan";
+    distanceBox.textContent = "Status: Drone is offline.";
+    ba(distanceBox);
+
+    //-//
+
+    let drone001Div = ce('div');
+    drone001Div.id = "drone001";
+    drone001Div.className = "drone-style";
+    drone001Div.textContent = "Drone001";
+    ba(drone001Div);
+
+    //-//
+
+    let drone002Div = ce('div');
+    drone002Div.id = "drone002";
+    drone002Div.className = "drone-style";
+    drone002Div.textContent = "DRONE 2";
+    ba(drone002Div);
+
+    //-//
+
+    let componentsDiagramSummary = ce('img');
+    componentsDiagramSummary.src = 'textures/CATopalian_JavaScript_Component_Based_Architecture_Flow.svg';
+    componentsDiagramSummary.style.width = '600px';
+    componentsDiagramSummary.onclick = function()
+    {
+        window.open('textures/CATopalian_JavaScript_Component_Based_Architecture_Flow.svg');
+    };
+    ba(componentsDiagramSummary);
+
+    //-//
+
+    let componentsDiagramFull = ce('img');
+    componentsDiagramFull.src = 'textures/CATopalian_JavaScript_Component_Based_Architecture_Flow_Code.svg';
+    componentsDiagramFull.style.width = '600px';
+    componentsDiagramFull.onclick = function()
+    {
+        window.open('textures/CATopalian_JavaScript_Component_Based_Architecture_Flow_Code.svg');
+    };
+    ba(componentsDiagramFull);
+
+    //-//
+
+    ba(ce('hr'));
+}
+
+// THE BOOT SEQUENCE
+function whenLoaded()
+{
+    // Build the physical HTML interface first
+    makeInterface();
+
+    // Now that the DOM element exists, build the Class logic container around it
+    drone001 = new Drone("drone001", 50, 170);
+
+    drone002 = new Drone("drone002", 50, 300);
+}
+
+// Trigger everything when the browser finishes loading
+window.onload = whenLoaded;
+
+</script>
+
+</head>
+
+<body>
+
+</body>
+
+</html>
+
