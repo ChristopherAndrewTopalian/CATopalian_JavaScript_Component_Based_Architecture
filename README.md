@@ -11,6 +11,10 @@ Use App: https://christopherandrewtopalian.github.io/CATopalian_JavaScript_Compo
 
 ![Component Based Architecture Flow](src/html/component_based_architecture_flow/textures/CATopalian_JavaScript_Component_Based_Architecture_Flow.png)
 
+![Component Based Architecture Flow](src/html/component_based_architecture_uml_horizontal/textures/CATopalian_JavaScript_Component_Based_Architecture_Flow.png)
+
+![Component Based Architecture Flow Summary](src/html/component_based_architecture_uml_horizontal/textures/CATopalian_JavaScript_Component_Based_Architecture_Flow_Summary.png)
+
 ### How to Download this App
 1. **Click** the green **Code Button** on this github page
 2. Choose **Download ZIP**
