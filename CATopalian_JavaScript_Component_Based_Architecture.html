@@ -87,13 +87,19 @@ function makeInterface()
     {
         name: '003',
         url: 'src/html/component_based_architecture_flow/CATopalian_JavaScript_Component_Based_Architecture.html'
-    }
+    },
+
+    {
+        name: '004',
+        url: 'src/html/component_based_architecture_uml_horizontal/CATopalian_JavaScript_Component_Based_Architecture.html'
+    },
 
     ];
 
     //-//
 
     let tutorialsDetails = ce('details');
+    tutorialsDetails.open = 'true';
     mainDiv.append(tutorialsDetails);
 
     let tutorialsSummary = ce('summary');
@@ -133,7 +139,7 @@ function makeInterface()
     theFrame.style.width = '600px';
     theFrame.style.height = '300px';
     theFrame.id = 'theFrame';
-    theFrame.src = tutorialFiles[1].url;
+    theFrame.src = tutorialFiles[3].url;
     mainDiv.append(theFrame);
 }
 

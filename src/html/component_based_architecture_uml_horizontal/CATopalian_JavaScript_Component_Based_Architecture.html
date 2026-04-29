@@ -1,0 +1,382 @@
+<!-- Dedicated to God the Father -->
+<!-- All Rights Reserved Christopher Andrew Topalian Copyright 2000-2026 -->
+<!-- https://github.com/ChristopherTopalian -->
+<!-- https://github.com/ChristopherAndrewTopalian -->
+<!-- CATopalian_JavaScript_Component_Based_Architecture.html -->
+
+<!DOCTYPE html>
+<html lang = 'en'>
+<head>
+<title> CATopalian JavaScript Component Based Architecture </title>
+
+<style>
+
+body
+{
+    background-color: rgb(30, 30, 30);
+    font-family: Arial;
+    color: rgb(255, 255, 255);
+}
+
+.drone-style
+{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background-color: rgb(100, 100, 100); /* Starts dull gray */
+    border: 2px solid white;
+    text-align: center;
+    line-height: 100px;
+    font-weight: bold;
+    transition: left 0.2s; /* Smooth movement */
+}
+
+.btn-style
+{
+    padding: 2px 5px;
+    margin-right: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: rgb(40, 67, 117);
+    color: rgb(255, 255, 255);
+    border: 1px solid cyan;
+    border-radius: 8px;
+}
+
+.btn-style:hover
+{
+    color: aqua;
+}
+
+</style>
+
+<script>
+
+// shortcuts
+
+function ge(whichId)
+{
+    let result = document.getElementById(whichId);
+    return result;
+}
+
+function ce(whichType)
+{
+    let result = document.createElement(whichType);
+    return result;
+}
+
+function ba(whichElement)
+{
+    let result = document.body.append(whichElement);
+    return result;
+}
+
+function cl(whichMessage)
+{
+    let result = console.log(whichMessage);
+    return result;
+}
+
+function gr(whichId)
+{
+    let result =  ge(whichId).getBoundingClientRect();
+    return result;
+}
+
+//----//
+
+// THE COMPONENTS (The Chips)
+
+class LocationComponent
+{
+    constructor(elementId, startX, startY)
+    {
+        this.element = ge(elementId);
+        this.x = startX;
+        this.y = startY;
+
+        // set the physical starting position in the DOM
+        this.element.style.left = this.x + "px";
+        this.element.style.top = this.y + "px";
+    }
+
+    moveLeft()
+    {
+        this.x -= 50;
+        this.element.style.left = this.x + "px";
+    }
+
+    moveRight()
+    {
+        this.x += 50;
+        this.element.style.left = this.x + "px";
+    }
+}
+
+class LEDComponent
+{
+    constructor(elementId)
+    {
+        this.element = ge(elementId);
+    }
+
+    setColor(newColor)
+    {
+        this.element.style.backgroundColor = newColor;
+    }
+
+    randomColor()
+    {
+        let r = Math.floor(Math.random() * 255);
+        let g = Math.floor(Math.random() * 255);
+        let b = Math.floor(Math.random() * 255);
+        this.setColor(`rgb(${r}, ${g}, ${b})`);
+    }
+}
+
+//----//
+
+class DistanceComponent
+{
+    constructor(elementId, originX = 0, originY = 0)
+    {
+        this.elementId = elementId;
+
+        // The anchor point we are measuring from
+        this.originX = originX;
+        this.originY = originY;
+    }
+
+    // Pure function: asks the DOM for position, returns the math
+    getDistanceFromOrigin()
+    {
+        // Uses our shortcut to get the physical DOM rect
+        let rect = gr(this.elementId); 
+        
+        // Calculate the difference between current position and origin
+        let diffX = Math.abs(rect.x - this.originX);
+        let diffY = Math.abs(rect.y - this.originY);
+
+        // Calculate the true straight-line distance (Radial)
+        let radialDistance = Math.floor(Math.sqrt((diffX * diffX) + (diffY * diffY)));
+
+        return { 
+            x: diffX, 
+            y: diffY, 
+            total: radialDistance 
+        };
+    }
+}
+
+//----//
+
+// THE SHELL (The Entity Container)
+class Drone
+{
+    constructor(id, startX, startY)
+    {
+        this.id = id;
+
+        this.location = new LocationComponent(id, startX, startY);
+
+        this.led = new LEDComponent(id);
+
+        // Initialize the new distance chip, setting startX and startY as the origin
+        this.distanceTracker = new DistanceComponent(id, startX, startY);
+    }
+
+    flyLeft()
+    {
+        this.location.moveLeft();
+
+        // Retrieve the math object from the chip
+        let distanceData = this.distanceTracker.getDistanceFromOrigin();
+
+        // Update the UI with the true distance from where it spawned
+        ge('distanceBox').textContent = `Distance from origin: ${distanceData.total}px`;
+
+        ge('infoBox').textContent = "Status: Drone flying left.";
+    }
+
+    flyRight()
+    {
+        this.location.moveRight();
+
+        // Retrieve the math object from the chip
+        let distanceData = this.distanceTracker.getDistanceFromOrigin();
+
+        // Update the UI with the true distance from where it spawned
+        ge('distanceBox').textContent = `Distance from origin: ${distanceData.total}px`;
+
+        ge('infoBox').textContent = "Status: Drone flying right.";
+    }
+}
+
+//----//
+
+// worlwide VARIABLES
+let drone001;
+
+let drone002;
+
+//----//
+
+// THE INTERFACE BUILDER
+function makeInterface()
+{
+    // Title
+    let title = ce('h3');
+    title.textContent = "CATopalian JavaScript Component Based Architecture Flow";
+    ba(title);
+
+    //-//
+
+    // btnFlyLeft
+    let btnFlyLeft = ce('button');
+    btnFlyLeft.className = "btn-style";
+    btnFlyLeft.textContent = "Fly Left";
+    btnFlyLeft.onclick = function()
+    { 
+        drone001.flyLeft(); 
+        drone002.flyLeft();
+    };
+    ba(btnFlyLeft);
+
+    //-//
+
+    // btnFlyRight
+    let btnFlyRight = ce('button');
+    btnFlyRight.className = "btn-style";
+    btnFlyRight.textContent = "Fly Right";
+    btnFlyRight.onclick = function()
+    { 
+        drone001.flyRight(); 
+        drone002.flyRight();
+    };
+    ba(btnFlyRight);
+
+    //-//
+
+    // BUTTON Engage Party Mode
+    let btnParty = ce('button');
+    btnParty.className = "btn-style";
+    btnParty.textContent = "Party Mode";
+    btnParty.onclick = function()
+    {
+        if (drone001.led)
+        {
+            drone001.led.randomColor();
+
+            ge('infoBox').textContent = "Status: Party Mode Engaged!";
+        }
+        else
+        {
+            ge('infoBox').textContent = "Error: Cannot activate. No LED Component installed!";
+        }
+
+        //-//
+
+        if (drone002.led)
+        {
+            drone002.led.randomColor();
+    
+            ge('infoBox').textContent = "Status: Party Mode Engaged!";
+        }
+        else
+        {
+            ge('infoBox').textContent = "Error: Cannot activate. No LED Component installed!";
+        }
+    };
+    ba(btnParty);
+
+    //-//
+
+    // The Info Box
+    let infoBox = ce('div');
+    infoBox.id = "infoBox";
+    infoBox.style.margin = "15px";
+    infoBox.style.color = "cyan";
+    infoBox.textContent = "Status: Drone is offline.";
+    ba(infoBox);
+
+    //-//
+
+    // The Info Box
+    let distanceBox = ce('div');
+    distanceBox.id = "distanceBox";
+    distanceBox.style.margin = "15px";
+    distanceBox.style.color = "cyan";
+    distanceBox.textContent = "Status: Drone is offline.";
+    ba(distanceBox);
+
+    //-//
+
+    // The Physical Drone Element
+    let drone001Div = ce('div');
+    drone001Div.id = "drone001";
+    drone001Div.className = "drone-style";
+    drone001Div.textContent = "Drone001";
+    ba(drone001Div);
+
+    //-//
+
+    // The Physical Element for Drone 2
+    let droneDiv2 = ce('div');
+    droneDiv2.id = "drone002";
+    droneDiv2.className = "drone-style";
+    droneDiv2.textContent = "DRONE 2";
+    ba(droneDiv2);
+
+    //-//
+
+    let componentsDiagramSummary = ce('img');
+    componentsDiagramSummary.src = 'textures/CATopalian_JavaScript_Component_Based_Architecture_Flow_Summary.svg';
+    componentsDiagramSummary.style.width = '600px';
+    componentsDiagramSummary.onclick = function()
+    {
+        window.open('textures/CATopalian_JavaScript_Component_Based_Architecture_Flow_Summary.svg');
+    };
+    ba(componentsDiagramSummary);
+
+    //-//
+
+    ba(ce('hr'));
+
+    //-//
+
+    let componentsDiagram = ce('img');
+    componentsDiagram.src = 'textures/CATopalian_JavaScript_Component_Based_Architecture_Flow.svg';
+    componentsDiagram.style.width = '600px';
+    componentsDiagram.onclick = function()
+    {
+        window.open('textures/CATopalian_JavaScript_Component_Based_Architecture_Flow.svg');
+    };
+    ba(componentsDiagram);
+}
+
+// THE BOOT SEQUENCE
+function whenLoaded()
+{
+    // Build the physical HTML interface first
+    makeInterface();
+
+    // Now that the DOM element exists, build the Class logic container around it
+    drone001 = new Drone("drone001", 50, 170);
+
+    drone002 = new Drone("drone002", 50, 300);
+}
+
+// Trigger everything when the browser finishes loading
+window.onload = whenLoaded;
+
+</script>
+
+</head>
+
+<body>
+
+</body>
+
+</html>
+
