@@ -1,0 +1,80 @@
+/* style001.css */
+
+body
+{
+    margin: 0px 4px;
+    background-color: rgb(30, 30, 30);
+    font-family: Arial;
+    color: rgb(255, 255, 255);
+}
+
+.drone-style
+{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background-color: rgb(100, 100, 100);
+    border: 2px solid white;
+    font-family: Arial;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+}
+
+button
+{
+    padding: 2px 5px;
+    margin-right: 10px;
+    cursor: pointer;
+    background-color: rgb(40, 67, 117);
+    border: 1px solid cyan;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    color: rgb(255, 255, 255);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 1.0);
+}
+
+button:hover
+{
+    color: aqua !important;
+}
+
+button:active
+{
+    color: rgb(255, 0, 255) !important;
+}
+
+.theTitle
+{
+    font-family: Arial;
+    font-size: 17px;
+    color: rgb(170, 170, 170);
+}
+
+#distanceBox
+{
+    position: absolute;
+    right: 0px;
+    top: 117px;
+    margin: 15px;
+    color: cyan;
+}
+
+#infoBox
+{
+    position: absolute;
+    right: 0px;
+    top: 140px;
+    margin: 15px;
+    color: cyan;
+}
+
+/*----*/
+
+/* Dedicated to God the Father */
+/* All Rights Reserved Christopher Andrew Topalian Copyright 2000-2026 */
+/* https://github.com/ChristopherTopalian */
+/* https://github.com/ChristopherAndrewTopalian */
+/* https://sites.google.com/view/CollegeOfScripting */
+
