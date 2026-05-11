@@ -1,5 +1,5 @@
 # CATopalian JavaScript Component Based Architecture
-This JS app teaches the pattern that AAA Game Studios use to program things such as GTA5 and other big game studio titles.
+Welcome to a JavaScript game engine built on the philosophy of Composition over Inheritance.
 
 ---
 
